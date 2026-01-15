@@ -49,7 +49,7 @@ if "api_key" not in st.session_state:
     st.session_state.api_key = ""
 
 # Create expander that collapses when API key is entered
-with st.sidebar.expander("🔑 LLM Configuration", expanded=not bool(st.session_state.api_key)):
+with st.sidebar.expander("LLM Configuration", expanded=not bool(st.session_state.api_key)):
     api_key = st.text_input(
         "OpenAI API Key",
         type="password",
@@ -80,7 +80,7 @@ api_key = st.session_state.api_key
 # --------------------------------
 # Sidebar: Session info
 # --------------------------------
-with st.sidebar.expander("📋 Interview Session", expanded=True):
+with st.sidebar.expander("Interview Session", expanded=True):
     if st.session_state.get("paper_text"):
         st.markdown("✓ Paper uploaded")
         
