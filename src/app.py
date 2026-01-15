@@ -494,6 +494,35 @@ if st.session_state.paper_text:
         with st.chat_message("assistant"):
             st.write(st.session_state.current_prompt)
 
+    # Custom CSS to add text to the send button and make it bigger
+    st.markdown("""
+        <style>
+        /* Hide the default send icon and show "Send" text instead */
+        div[data-testid="stChatInput"] button {
+            position: relative;
+            min-width: 80px !important;
+            min-height: 40px !important;
+            padding: 8px 16px !important;
+            background-color: #bc0031 !important;
+            border-color: #bc0031 !important;
+        }
+        div[data-testid="stChatInput"] button:hover {
+            background-color: #d1003a !important;
+            border-color: #d1003a !important;
+        }
+        div[data-testid="stChatInput"] button svg {
+            display: none !important;
+        }
+        div[data-testid="stChatInput"] button::after {
+            content: "Send";
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 500;
+            color: white !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
     # Chat input for user response (disabled when all answered)
     user_answer = st.chat_input("Type your answer here...", disabled=all_answered)
 
