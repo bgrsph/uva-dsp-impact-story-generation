@@ -40,6 +40,20 @@ I am pleased to share the following impact story that highlights the societal re
 
 Best regards"""
 
+# --------------------------------
+# Impact Story Section Constants
+# --------------------------------
+IMPACT_STORY_SECTIONS = {
+    "title_hook": "Title",
+    "societal_problem": "Introduction",
+    "societal_impact": "Societal Impact",
+    "research_and_approach": "Research and Approach",
+    "people_and_collaboration": "People and Collaboration",
+    "outlook": "Conclusion/Outlook"
+}
+
+MAX_ATTEMPTS_PER_SECTION = 2
+
 
 # --------------------------------
 # Sidebar: API config
@@ -93,6 +107,40 @@ with st.sidebar.expander("Interview Session", expanded=True):
             st.markdown("Started 0 mins ago")
     else:
         st.markdown("Paper not uploaded")
+
+# --------------------------------
+# Sidebar: Question Progress
+# --------------------------------
+if st.session_state.get("paper_text") and "impact_state" in st.session_state:
+    with st.sidebar.expander("Question Progress", expanded=True):
+        impact_state = st.session_state.impact_state
+        section_keys = list(IMPACT_STORY_SECTIONS.keys())
+        
+        for idx, (section_key, display_name) in enumerate(IMPACT_STORY_SECTIONS.items(), 1):
+            section_data = impact_state.get(section_key, {})
+            is_answered = section_data.get("content") is not None
+            
+            if is_answered:
+                st.markdown(f"✓ {display_name}")
+                st.caption("Answered")
+            else:
+                # Find current section being worked on
+                missing_section = next(
+                    (k for k, v in impact_state.items() 
+                     if v.get("content") is None and v.get("attempts", 0) < MAX_ATTEMPTS_PER_SECTION),
+                    None
+                )
+                
+                if section_key == missing_section:
+                    st.markdown(f"🔴 {display_name}")
+                    st.caption(f"In progress")
+                else:
+                    # Find the position of this section among unanswered sections
+                    unanswered_sections = [k for k in IMPACT_STORY_SECTIONS.keys() 
+                                          if impact_state.get(k, {}).get("content") is None]
+                    position = unanswered_sections.index(section_key) + 1 if section_key in unanswered_sections else idx
+                    st.markdown(f"⚪ {display_name}")
+                    st.caption(f"Pending")
 
 # --------------------------------
 # Initialize LLM
@@ -211,8 +259,6 @@ def summarize_paper_sections(full_text):
     )
     return llm.invoke(prompt).content
 
-MAX_ATTEMPTS_PER_SECTION = 2
-
 def next_missing_section(state):
     for k, v in state.items():
         if v["content"] is None and v["attempts"] < MAX_ATTEMPTS_PER_SECTION:
@@ -227,7 +273,7 @@ def generate_interview_turn(section, paper_text, last_answer=None):
         "in plain language (if one exists).\n"
         "Then explain why this aspect matters from a societal or human perspective.\n"
         "Finally, ask ONE open-ended question to help develop the following impact story section:\n\n"
-        f"{section.replace('_', ' ').title()}\n\n"
+        f"{IMPACT_STORY_SECTIONS.get(section, section.replace('_', ' ').title())}\n\n"
         "Avoid jargon. Keep the tone conversational and supportive.\n\n"
         "Research paper context:\n"
         f"{paper_text}\n\n"
@@ -241,7 +287,7 @@ def evaluate_and_store(section, paper_text):
 
     prompt = (
         f"You are helping synthesize an impact story section: "
-        f"{section.replace('_', ' ').title()}.\n\n"
+        f"{IMPACT_STORY_SECTIONS.get(section, section.replace('_', ' ').title())}.\n\n"
         "Below are multiple responses provided by the researcher over the interview.\n\n"
         f"{combined_answers}\n\n"
         "If this information is sufficient, synthesize a clear, human-friendly "
@@ -592,7 +638,8 @@ if st.session_state.paper_text:
                 )
 
                 for k, v in st.session_state.impact_state.items():
-                    prompt += f"\n{k.replace('_', ' ').title()}:\n{v['content']}\n"
+                    section_name = IMPACT_STORY_SECTIONS.get(k, k.replace('_', ' ').title())
+                    prompt += f"\n{section_name}:\n{v['content']}\n"
 
                 impact_story = llm.invoke(prompt).content
                 st.session_state.generated_story = impact_story
@@ -653,7 +700,8 @@ if st.session_state.paper_text:
                         )
 
                         for k, v in st.session_state.impact_state.items():
-                            prompt += f"\n{k.replace('_', ' ').title()}:\n{v['content']}\n"
+                            section_name = IMPACT_STORY_SECTIONS.get(k, k.replace('_', ' ').title())
+                            prompt += f"\n{section_name}:\n{v['content']}\n"
                         
                         prompt += f"\n\nRevision requests from the user:\n{feedback_text}\n\n"
                         prompt += "Please incorporate these revision requests into the story."
