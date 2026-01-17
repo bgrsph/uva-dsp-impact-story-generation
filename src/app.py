@@ -648,18 +648,8 @@ if st.session_state.paper_text:
         if st.session_state.generated_story:
             st.markdown(st.session_state.generated_story)
             
-            # Revision feature
-            if not st.session_state.revision_mode:
-                if st.button("Revise Story"):
-                    st.session_state.revision_mode = True
-                    st.session_state.revision_welcome_shown = False
-                    st.session_state.revision_feedback = []
-                    st.rerun()
-            
             # Revision interface
             if st.session_state.revision_mode:
-                st.subheader("✏️ Revision")
-                
                 # Show welcome message once
                 if not st.session_state.revision_welcome_shown:
                     with st.chat_message("assistant"):
@@ -713,37 +703,49 @@ if st.session_state.paper_text:
                         st.session_state.revision_feedback = []
                         st.rerun()
         
-        # Display export options if story is generated
+        # Display action buttons if story is generated
         if st.session_state.generated_story:
-            st.subheader("📥 Export Options")
-            
             # Extract title for filename
             story_title = extract_title(st.session_state.generated_story)
             
-            pdf_bytes = generate_pdf(st.session_state.generated_story)
-            st.download_button(
-                label="📄 Download as PDF",
-                data=pdf_bytes,
-                file_name=f"{story_title}.pdf",
-                mime="application/pdf"
-            )
+            # Create columns for side-by-side buttons
+            col1, col2, col3, col4 = st.columns(4)
             
-            word_bytes = generate_word(st.session_state.generated_story)
-            st.download_button(
-                label="📝 Download as Word",
-                data=word_bytes,
-                file_name=f"{story_title}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
+            with col1:
+                if not st.session_state.revision_mode:
+                    if st.button("Revise Story"):
+                        st.session_state.revision_mode = True
+                        st.session_state.revision_welcome_shown = False
+                        st.session_state.revision_feedback = []
+                        st.rerun()
             
-            # Email export
-            email_subject, email_body = generate_email_content(
-                st.session_state.generated_story,
-                EMAIL_SUBJECT,
-                EMAIL_INTRO_TEXT
-            )
-            mailto_link = create_mailto_link(email_subject, email_body)
-            st.link_button(
-                "📧 Send via Email",
-                mailto_link
-            )
+            with col2:
+                pdf_bytes = generate_pdf(st.session_state.generated_story)
+                st.download_button(
+                    label="📄 Download as PDF",
+                    data=pdf_bytes,
+                    file_name=f"{story_title}.pdf",
+                    mime="application/pdf"
+                )
+            
+            with col3:
+                word_bytes = generate_word(st.session_state.generated_story)
+                st.download_button(
+                    label="📝 Download as Word",
+                    data=word_bytes,
+                    file_name=f"{story_title}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+            
+            with col4:
+                # Email export
+                email_subject, email_body = generate_email_content(
+                    st.session_state.generated_story,
+                    EMAIL_SUBJECT,
+                    EMAIL_INTRO_TEXT
+                )
+                mailto_link = create_mailto_link(email_subject, email_body)
+                st.link_button(
+                    "📧 Send via Email",
+                    mailto_link
+                )
