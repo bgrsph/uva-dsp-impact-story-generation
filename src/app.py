@@ -149,6 +149,15 @@ if "current_prompt" not in st.session_state:
 if "generated_story" not in st.session_state:
     st.session_state.generated_story = None
 
+if "revision_mode" not in st.session_state:
+    st.session_state.revision_mode = False
+
+if "revision_feedback" not in st.session_state:
+    st.session_state.revision_feedback = []
+
+if "revision_welcome_shown" not in st.session_state:
+    st.session_state.revision_welcome_shown = False
+
 # --------------------------------
 # Helper functions
 # --------------------------------
@@ -588,6 +597,70 @@ if st.session_state.paper_text:
         # Display the story if it exists in session state
         if st.session_state.generated_story:
             st.markdown(st.session_state.generated_story)
+            
+            # Revision feature
+            if not st.session_state.revision_mode:
+                if st.button("Revise Story"):
+                    st.session_state.revision_mode = True
+                    st.session_state.revision_welcome_shown = False
+                    st.session_state.revision_feedback = []
+                    st.rerun()
+            
+            # Revision interface
+            if st.session_state.revision_mode:
+                st.subheader("✏️ Revision")
+                
+                # Show welcome message once
+                if not st.session_state.revision_welcome_shown:
+                    with st.chat_message("assistant"):
+                        st.write("Welcome back, please tell me what you would like to change in the summary.")
+                    st.session_state.revision_welcome_shown = True
+                
+                # Display revision conversation history
+                for feedback in st.session_state.revision_feedback:
+                    with st.chat_message("user"):
+                        st.write(feedback["user_input"])
+                    with st.chat_message("assistant"):
+                        st.write("Thank you for your answer. I have all the necessary information I need. Do you want to add anything else or should we end this interview?")
+                
+                # Chat input for revision feedback
+                revision_input = st.chat_input("Type your revision request here...")
+                
+                if revision_input:
+                    st.session_state.revision_feedback.append({"user_input": revision_input})
+                    st.rerun()
+                
+                # End interview button
+                if st.button("End interview and generate summary"):
+                    # Regenerate story with revision feedback
+                    with st.spinner("Regenerating story with your revisions..."):
+                        feedback_text = "\n".join([f["user_input"] for f in st.session_state.revision_feedback])
+                        prompt = (
+                            "Write a complete Impact Story for a broad audience using the structure below.\n\n"
+                            "Structure and word limits:\n"
+                            "- Title (short, active)\n"
+                            "- Introduction (~100 words)\n"
+                            "- Societal Impact (~150 words)\n"
+                            "- Research and Approach (~150 words)\n"
+                            "- People and Collaboration (~100 words)\n"
+                            "- Conclusion / Outlook (~50 words)\n\n"
+                            "Keep the story concrete and human. Avoid jargon.\n"
+                            "Focus on the connection between science and everyday life.\n\n"
+                            "Use the following elicited content as your primary source:\n\n"
+                        )
+
+                        for k, v in st.session_state.impact_state.items():
+                            prompt += f"\n{k.replace('_', ' ').title()}:\n{v['content']}\n"
+                        
+                        prompt += f"\n\nRevision requests from the user:\n{feedback_text}\n\n"
+                        prompt += "Please incorporate these revision requests into the story."
+                        
+                        impact_story = llm.invoke(prompt).content
+                        st.session_state.generated_story = impact_story
+                        st.session_state.revision_mode = False
+                        st.session_state.revision_welcome_shown = False
+                        st.session_state.revision_feedback = []
+                        st.rerun()
         
         # Display export options if story is generated
         if st.session_state.generated_story:
