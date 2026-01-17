@@ -21,9 +21,27 @@ from urllib.parse import quote
 # --------------------------------
 st.set_page_config(
     page_title="IxA",
-    page_icon="🔬",
+    page_icon="resources/uva_icon.png",
     layout="wide"
 )
+st.image("resources/uva_logo_2.png", width=200)
+
+# Custom CSS for title and caption with UvA Utopia font (which is the official font of UvA: https://www.uva.nl/over-de-uva/over-de-universiteit/huisstijl/huisstijlelementen/lettertypen/lettertypen.html)
+st.markdown("""
+    <style>
+    h1, h2, h3 {
+        font-family: 'Utopia', 'Georgia', serif !important;
+        font-weight: 600 !important;
+    }
+    .stApp > header + div [data-testid="stMarkdownContainer"] p {
+        font-family: 'Utopia', 'Georgia', serif !important;
+    }
+    /* Chat messages and general text */
+    .stChatMessage, .stMarkdown, p, div {
+        font-family: 'Utopia', 'Georgia', serif !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 st.title("Research Impact Interview")
 st.caption(
@@ -40,6 +58,8 @@ I am pleased to share the following the summary of the research for impact story
 
 Best regards,
 Bart van Zelst
+Faculty of Economics and Business
+Marketing & Communication
 """
 
 # --------------------------------
