@@ -920,7 +920,6 @@ st.caption(
 )
         
 # ---------------- MAIN ----------------
-st.set_page_config(page_title="Summary Interview for Impact Stories", layout="centered")
 init_db()
 
 st.sidebar.title("Role")
