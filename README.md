@@ -6,6 +6,17 @@ UvA Data Systems Group Project: Generating Impact Stories from Research
 
 Matt Boerio, Akira Driessen, Warren Fernandes, Buğra Sipahioğlu, Liwia Tarkowska
 
+## Supervisors
+
+Milen Kebede, Frank Nack
+
+## Stakeholder
+
+A.A. (Bart) van Zelst  
+Communicatieadviseur Impact  
+Faculteit Economie en Bedrijfskunde  
+Marketing & Communicatie
+
 ## Overview of the Project
 
 A guided human-AI process for translating research into summaries that assist the creation of societal impact stories. The system conducts conversational interviews with researchers about their papers and generates structured summaries for impact narratives.
