@@ -438,9 +438,42 @@ def admin_panel():
         return  # stop here if not authenticated
     if st.session_state.admin_authenticated:
 
-        if st.button("Logout"):
-            st.session_state.admin_authenticated = False
-            st.rerun()
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button("Logout"):
+                st.session_state.admin_authenticated = False
+                st.rerun()
+        
+        with col2:
+            # Clear Database with confirmation
+            if "confirm_clear_db" not in st.session_state:
+                st.session_state.confirm_clear_db = False
+            
+            if st.button("Clear Database", type="secondary"):
+                st.session_state.confirm_clear_db = True
+                st.rerun()
+        
+        # Show warning alert if user clicked Clear Database
+        if st.session_state.confirm_clear_db:
+            st.warning("⚠️ **Are you sure?** This action cannot be undone and all the data stored will be permanently deleted.")
+            
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                if st.button("Yes, Clear Database", type="primary"):
+                    conn = get_conn()
+                    conn.execute("DELETE FROM interview_states")
+                    conn.execute("DELETE FROM interviews")
+                    conn.execute("DELETE FROM papers")
+                    conn.commit()
+                    conn.close()
+                    st.session_state.confirm_clear_db = False
+                    st.success("Database cleared successfully!")
+                    st.rerun()
+            
+            with col2:
+                if st.button("Cancel"):
+                    st.session_state.confirm_clear_db = False
+                    st.rerun()
         
         uploaded_file = st.file_uploader("Upload research paper (PDF)", type=["pdf"])
     
@@ -518,7 +551,7 @@ def admin_panel():
         
         conn.close()
     
-        st.subheader("📋 All Interviews")
+        st.subheader("All Interviews")
     
         table_data = []
         
@@ -601,17 +634,37 @@ def interview_ui():
     code = st.session_state.interview_code
 
     conn = get_conn()
-    paper_text = conn.execute("""
+    
+    # Check if interview exists
+    paper_result = conn.execute("""
         SELECT p.pdf_text
         FROM papers p
         JOIN interviews i ON p.paper_id = i.paper_id
         WHERE i.interview_code = ?
-    """, (code,)).fetchone()[0]
+    """, (code,)).fetchone()
+    
+    if paper_result is None:
+        conn.close()
+        st.error("Admin has deleted this session. Please contact them for further assistance.")
+        if st.button("Back to Login"):
+            del st.session_state.interview_code
+            st.rerun()
+        return
+    
+    paper_text = paper_result[0]
 
     row = conn.execute(
             "SELECT state_json, transcript_json, generated_story FROM interview_states WHERE interview_code = ?",
             (code,)
         ).fetchone()
+    
+    if row is None:
+        conn.close()
+        st.error("Admin has deleted this session. Please contact them for further assistance.")
+        if st.button("Back to Login"):
+            del st.session_state.interview_code
+            st.rerun()
+        return
 
     state = json.loads(row[0])
     st.session_state.impact_state = state  # sync session with DB state
